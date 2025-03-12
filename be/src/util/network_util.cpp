@@ -48,6 +48,7 @@
 #include <climits>
 #include <cstring>
 #include <sstream>
+#include <fstream>
 #include <utility>
 
 #include "gutil/strings/substitute.h"
@@ -132,6 +133,12 @@ Status get_hosts(std::vector<InetAddress>* hosts) {
         } else {
             continue;
         }
+        // UBIQ: parsing custom hosts add by @xqli at 2025-03-12
+        std::unordered_map<std::string, std::string> host_map;
+        load_custom_host_map(host_map);
+        for(auto&[hostname, ip]: host_map){
+            hosts->emplace_back(ip, AF_INET, false);
+        }
     }
 
     // Prefer ipv4 address by default for compatibility reason.
@@ -195,9 +202,45 @@ bool is_valid_ip(const std::string& ip) {
     return (inet_pton(AF_INET6, ip.data(), buf) > 0) || (inet_pton(AF_INET, ip.data(), buf) > 0);
 }
 
+// UBIQ: using customer `/etc/hosts` e.g: /path/to/user/etc/hosts to enhance /etc/hosts
+void load_custom_host_map(std::unordered_map<std::string, std::string>& host_map){
+    const char* custom_hosts_path = std::getenv("HOSTS_FILE");
+    if (custom_hosts_path == nullptr) return;
+
+    std::ifstream file(custom_hosts_path);
+    if (!file.is_open()) {
+        LOG(WARNING) << "Failed to open custom hosts file: " << custom_hosts_path;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if(line.size() < 1 || line[0] == '#')
+            continue;
+        size_t pos = line.find_first_not_of(" \t");
+        if (pos == std::string::npos) continue;
+        line = line.substr(pos);
+
+        std::istringstream iss(line);
+        std::string ip, host;
+        if (iss >> ip >> host) {
+            host_map[host] = ip;
+        }
+    }
+    LOG(INFO) << "Loaded custom hosts file: " << custom_hosts_path;
+}
+
 // Prefer ipv4 when both ipv4 and ipv6 bound to the same host
 Status hostname_to_ip(const std::string& host, std::string& ip) {
     auto start = std::chrono::high_resolution_clock::now();
+    // UBIQ: parsing custom hosts add by @xqli at 2025-03-12
+    std::unordered_map<std::string, std::string> host_map;
+    load_custom_host_map(host_map);
+    if(host_map.find(host) != host_map.end()){
+        ip = host_map[host];
+        return Status::OK();
+    }
+    // original main logical
     Status status = hostname_to_ipv4(host, ip);
     if (status.ok()) {
         return status;
@@ -214,6 +257,14 @@ Status hostname_to_ip(const std::string& host, std::string& ip) {
 }
 
 Status hostname_to_ip(const std::string& host, std::string& ip, bool ipv6) {
+    // UBIQ: parsing custom hosts add by @xqli at 2025-03-12
+    std::unordered_map<std::string, std::string> host_map;
+    load_custom_host_map(host_map);
+    if(host_map.find(host) != host_map.end()){
+        ip = host_map[host];
+        return Status::OK();
+    }
+    // original main logical
     if (ipv6) {
         return hostname_to_ipv6(host, ip);
     } else {

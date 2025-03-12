@@ -67,6 +67,9 @@ Status hostname_to_ipv6(const std::string& host, std::string& ip);
 
 bool is_valid_ip(const std::string& ip);
 
+// UBIQ: using customer `/etc/hosts` e.g: /path/to/user/etc/hosts to enhance /etc/hosts
+void load_custom_host_map(std::unordered_map<std::string, std::string>& host_map);
+
 // Sets the output argument to the system defined hostname.
 // Returns OK if a hostname can be found, false otherwise.
 Status get_hostname(std::string* hostname);
