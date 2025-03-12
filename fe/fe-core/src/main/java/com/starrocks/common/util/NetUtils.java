@@ -45,6 +45,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.io.FileReader;
+import java.io.BufferedReader;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -80,6 +82,34 @@ public class NetUtils {
                     continue;
                 }
                 hosts.add(addr);
+            }
+        }
+        // UBIQ: added for user hosts inject @ 2025-03-12
+        String path = System.getenv("HOSTS_FILE");
+        if(path != null && !path.isEmpty()){
+            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // 去除两端空白并跳过空行和注释行
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    // 分离行内注释
+                    String content = line.split("#", 2)[0].trim();
+                    if (content.isEmpty()) {
+                        continue; // 只有注释的行
+                    }
+                    // 分割 IP 和主机名
+                    String[] parts = content.split("\\s+"); // 使用空白字符分割
+                    if (parts.length < 2) {
+                        continue; // 无效行（无主机名）
+                    }
+                    hosts.add(InetAddress.getByName(parts[1]));
+                    LOG.info("add user ip/hostname pair: ip={}, hostname={}", parts[0], parts[1]);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
