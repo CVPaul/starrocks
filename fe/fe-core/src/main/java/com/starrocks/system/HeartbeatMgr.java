@@ -209,17 +209,17 @@ public class HeartbeatMgr extends FrontendDaemon {
                     if (hbResponse.getStatus() != HbStatus.OK) {
                         // invalid all connections cached in ClientPool
                         ThriftConnectionPool.backendPool.clearPool(
-                                new TNetworkAddress(computeNode.getHost(), computeNode.getBePort()));
+                                new TNetworkAddress(computeNode.getIP(), computeNode.getBePort()));
                         if (!isReplay && !computeNode.isAlive()) {
                             GlobalStateMgr.getCurrentState().getGlobalTransactionMgr()
-                                    .abortTxnWhenCoordinateBeDown(computeNode.getHost(), 100);
+                                    .abortTxnWhenCoordinateBeDown(computeNode.getIP(), 100);
                         }
                     } else {
                         if (RunMode.isSharedDataMode() && !isReplay) {
                             // addWorker
                             int starletPort = computeNode.getStarletPort();
                             if (starletPort != 0) {
-                                String workerAddr = NetUtils.getHostPortInAccessibleFormat(computeNode.getHost(),
+                                String workerAddr = NetUtils.getHostPortInAccessibleFormat(computeNode.getIP(),
                                         starletPort);
 
                                 GlobalStateMgr.getCurrentState().getStarOSAgent().
@@ -262,11 +262,11 @@ public class HeartbeatMgr extends FrontendDaemon {
         @Override
         public HeartbeatResponse call() {
             long computeNodeId = computeNode.getId();
-            TNetworkAddress beAddr = new TNetworkAddress(computeNode.getHost(), computeNode.getHeartbeatPort());
+            TNetworkAddress beAddr = new TNetworkAddress(computeNode.getIP(), computeNode.getHeartbeatPort());
             boolean ok = false;
             try {
                 TMasterInfo copiedMasterInfo = new TMasterInfo(MASTER_INFO.get());
-                copiedMasterInfo.setBackend_ip(computeNode.getHost());
+                copiedMasterInfo.setBackend_ip(computeNode.getIP());
                 long flags = HeartbeatFlags.getHeartbeatFlags();
                 copiedMasterInfo.setHeartbeat_flags(flags);
                 copiedMasterInfo.setBackend_id(computeNodeId);
