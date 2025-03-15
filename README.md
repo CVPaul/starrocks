@@ -1,3 +1,7 @@
+# The Most important thing
+
+- 2025-03-15 停止研究，最后还剩下be无法解析fe1的问题，猜测和fe一样是因为thrift无法解析host，大概只需要像fe一样将getHost()换成getIP()即可（详见最近的commit）
+
 
  <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=e8355b6b-a9fc-4d4e-8ed8-b3157aa1827d" />
  <p align="center">
@@ -141,4 +145,5 @@ This project is used by the following companies. Learn more about their use case
 - [Verisoul](https://celerdata.com/blog/verisoul-enables-real-time-analytics-by-transitioning-off-bigquery)
 - [Trip.com](https://starrocks.medium.com/trip-com-starrocks-efficiently-supports-high-concurrent-queries-dramatically-reduces-labor-and-1e1921dd6bf8) 
 - [Didi](https://www.starrocks.io/blog/reduced-80-cost-didis-journey-from-multiple-olap-engines-to-starrocks)
+
 - [Grab](https://engineering.grab.com/building-a-spark-observability)
